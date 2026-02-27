@@ -9,6 +9,13 @@ import { ResilienceModule } from "./common/resilience/resilience.module";
 import configuration from "./config/configuration";
 import { AppController } from "./app.controller";
 
+const cleanEnvString = () =>
+  Joi.string()
+    .replace(/\\r\\n/g, "")
+    .replace(/\r?\n/g, "")
+    .replace(/[\\"]/g, "")
+    .trim();
+
 @Module({
   controllers: [AppController],
   imports: [
@@ -18,13 +25,13 @@ import { AppController } from "./app.controller";
       load: [configuration],
       validationSchema: Joi.object({
         PORT: Joi.number().default(3000),
-        JWT_SECRET: Joi.string().min(12).required(),
-        PLRA_TOKENS: Joi.string().required(),
-        REDIS_URL: Joi.string().uri().optional(),
-        REDIS_USERNAME: Joi.string().optional(),
-        REDIS_PASSWORD: Joi.string().optional(),
-        REDIS_HOST: Joi.string().hostname().optional(),
-        REDIS_PORT: Joi.number().port().default(6379),
+        JWT_SECRET: cleanEnvString().min(12).required(),
+        PLRA_TOKENS: cleanEnvString().required(),
+        REDIS_URL: cleanEnvString().uri().optional(),
+        REDIS_USERNAME: cleanEnvString().optional(),
+        REDIS_PASSWORD: cleanEnvString().optional(),
+        REDIS_HOST: cleanEnvString().optional(),
+        REDIS_PORT: cleanEnvString().optional(),
       }),
     }),
     HttpModule,
