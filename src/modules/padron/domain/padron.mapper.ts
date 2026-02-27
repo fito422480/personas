@@ -1,6 +1,11 @@
 export class PadronMapper {
   static toResponse(data: any) {
+    const nombres = data.nombre ?? null;
+    const apellidos = data.apellido ?? null;
+
     return {
+      nombre: nombres,
+      apellido: apellidos,
       nombresYApellido: data.nombresYApellido,
       cedula: data.cedula,
       fec_nac: data.fec_nac,

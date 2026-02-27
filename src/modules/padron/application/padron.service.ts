@@ -11,6 +11,8 @@ import { TokenManager } from "../../../common/token/token.manager";
 import { PadronMapper } from "../domain/padron.mapper";
 
 type PadronRaw = {
+  nombre?: string;
+  apellido?: string;
   nombresYApellido: string;
   cedula: string;
   fec_nac: string;
@@ -31,9 +33,7 @@ export class PadronService {
     private readonly breakerFactory: CircuitBreakerService,
     private readonly tokenManager: TokenManager,
   ) {
-    this.breaker = this.breakerFactory.create(
-      this.fetchFromPlra.bind(this),
-    );
+    this.breaker = this.breakerFactory.create(this.fetchFromPlra.bind(this));
   }
 
   private async fetchFromPlra(cedula: string): Promise<PadronRaw[]> {
@@ -42,29 +42,29 @@ export class PadronService {
     url.searchParams.set("cedula", cedula);
 
     return this.retry.execute(() =>
-      this.http.get<PadronRaw[]>(
-        url.toString(),
-        {
-          Authorization: `Bearer ${token}`,
-          Referer: "https://plra.org.py/public/buscar_enrcp.php",
-        },
-      ),
+      this.http.get<PadronRaw[]>(url.toString(), {
+        Authorization: `Bearer ${token}`,
+        Referer: "https://plra.org.py/public/buscar_enrcp.php",
+      }),
     );
   }
 
   async buscar(cedula: string) {
     const cacheKey = `padron:${cedula}`;
 
-    const cached = await this.cache.get<ReturnType<typeof PadronMapper.toResponse>>(
-      cacheKey,
-    );
+    const cached =
+      await this.cache.get<ReturnType<typeof PadronMapper.toResponse>>(
+        cacheKey,
+      );
     if (cached) return cached;
 
     let data: PadronRaw[];
     try {
       data = await this.breaker.fire(cedula);
     } catch {
-      throw new BadGatewayException("No se pudo consultar el proveedor externo");
+      throw new BadGatewayException(
+        "No se pudo consultar el proveedor externo",
+      );
     }
 
     if (!data.length) {
